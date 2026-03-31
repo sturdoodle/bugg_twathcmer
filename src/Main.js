@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { timerdata } from './constant'
 import Timer from './Timer'
+import { Link } from 'react-router-dom'
 // import { Modal } from "react-bootstrap";
 
 function Main() {
@@ -97,6 +98,11 @@ function Main() {
           </div>
         </div>
 
+        <div className='text-center mt-4 mb-5'>
+          <Link to='/v2' className='btn btn-outline-dark rounded-pill px-5 py-2 fw-bold shadow-sm' style={{ transition: 'all 0.3s' }}>
+            ✨ Try New Focus V2 Experience →
+          </Link>
+        </div>
       </>
     )
   }
