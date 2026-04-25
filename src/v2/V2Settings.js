@@ -37,16 +37,16 @@ const V2Settings = ({ onClose }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="settings-card" onClick={e => e.stopPropagation()}>
-        <header style={{ marginBottom: 'var(--spacing-12)' }}>
+        <header style={{ marginBottom: 'clamp(0.5rem, 2vh, var(--spacing-12))', flexShrink: 0 }}>
           <div className="d-flex justify-content-between align-items-center">
-            <h2 className="title-lg">Settings</h2>
+            <h2 className="title-lg" style={{ fontSize: 'clamp(1rem, min(4vw, 4vh), 1.5rem)' }}>Settings</h2>
             <button className="btn-ghost" onClick={onClose} style={{ padding: '0.25rem' }}>✕</button>
           </div>
           <p className="label-md" style={{ fontSize: '0.65rem', marginTop: '0.25rem', opacity: 0.5 }}>Configure your ideal focus workstation</p>
         </header>
         
-        <div className="settings-body" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: 'var(--spacing-2)' }}>
-          <section style={{ marginBottom: 'var(--spacing-8)' }}>
+        <div className="settings-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 'var(--spacing-2)' }}>
+          <section style={{ marginBottom: 'clamp(0.5rem, 2vh, var(--spacing-8))' }}>
             <h3 className="label-md" style={{ marginBottom: 'var(--spacing-4)', opacity: 0.8 }}>Durations (min)</h3>
             <div className="input-group">
               <label className="title-md" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Pomodoro Focus</label>
@@ -89,7 +89,7 @@ const V2Settings = ({ onClose }) => {
             </div>
           </section>
 
-          <section style={{ marginBottom: 'var(--spacing-8)' }}>
+          <section style={{ marginBottom: 'clamp(0.5rem, 2vh, var(--spacing-8))' }}>
             <h3 className="label-md" style={{ marginBottom: 'var(--spacing-4)', opacity: 0.8 }}>Typography</h3>
             <div className="input-group" style={{ gridTemplateColumns: '1fr' }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--spacing-2)' }}>
@@ -102,6 +102,7 @@ const V2Settings = ({ onClose }) => {
                       padding: '0.65rem 0.25rem', 
                       fontSize: '0.65rem',
                       fontFamily: font.id === 'DSEG14' ? 'DSEG14' : `'${font.id}', sans-serif`,
+                      fontStyle: font.id === 'DSEG14' ? 'italic' : 'normal',
                       border: localSettings.fontFamily === font.id ? '1.5px solid var(--primary)' : '1px solid transparent',
                       background: localSettings.fontFamily === font.id ? 'var(--surface-container-highest)' : 'var(--surface-container-low)',
                       whiteSpace: 'nowrap',
@@ -117,7 +118,7 @@ const V2Settings = ({ onClose }) => {
             </div>
           </section>
 
-          <section style={{ marginBottom: 'var(--spacing-8)' }}>
+          <section style={{ marginBottom: 'clamp(0.5rem, 2vh, var(--spacing-8))' }}>
             <h3 className="label-md" style={{ marginBottom: 'var(--spacing-4)', opacity: 0.8 }}>Preferences</h3>
             <div className="input-group" style={{ display: 'flex', justifyContent: 'space-between' }}>
               <label className="title-md" style={{ fontSize: '0.9rem', fontWeight: 500 }}>Show Milliseconds</label>
@@ -149,9 +150,9 @@ const V2Settings = ({ onClose }) => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--spacing-6)', marginTop: 'var(--spacing-12)' }}>
+        <div style={{ display: 'flex', gap: 'var(--spacing-6)', marginTop: 'clamp(0.5rem, 2vh, var(--spacing-12))', flexShrink: 0 }}>
           <button className="btn-ghost" style={{ flex: 1 }} onClick={onClose}>Discard</button>
-          <button className="btn-primary" style={{ flex: 1, padding: '1rem' }} onClick={handleSave}>Save Changes</button>
+          <button className="btn-primary" style={{ flex: 1, padding: 'clamp(0.6rem, 2vh, 1rem)' }} onClick={handleSave}>Save Changes</button>
         </div>
       </div>
     </div>

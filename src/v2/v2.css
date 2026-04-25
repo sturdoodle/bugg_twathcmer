@@ -92,7 +92,8 @@ body {
 /* Typography Utility Classes */
 .display-lg {
   font-family: var(--app-font);
-  font-size: clamp(5rem, 15vw, 9rem);
+  /* Scales with the smaller of vw/vh so it stays proportional in landscape */
+  font-size: clamp(3rem, min(15vw, 22vh), 9rem);
   font-weight: 800;
   line-height: 0.9;
   letter-spacing: -0.04em;
@@ -300,12 +301,12 @@ body {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding-bottom: var(--spacing-24);
+  padding-bottom: clamp(1rem, 8vh, var(--spacing-24));
 }
 
 .timer-hero {
   text-align: center;
-  margin: var(--spacing-12) 0;
+  margin: clamp(0.5rem, 4vh, var(--spacing-12)) 0;
   width: 100%;
 }
 
@@ -345,9 +346,12 @@ body {
   -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;      /* allow card to start at top when too tall */
+  overflow-y: auto;             /* overlay itself scrolls in landscape */
+  padding: clamp(0.5rem, 3vh, 2rem) clamp(0.5rem, 3vw, 1rem);
   z-index: 1000;
   animation: fadeIn 0.4s ease;
+  box-sizing: border-box;
 }
 
 @keyframes fadeIn {
@@ -358,13 +362,17 @@ body {
 .settings-card {
   width: 90%;
   max-width: 600px;
+  max-height: 92dvh;            /* never taller than viewport */
   background-color: var(--surface-container-lowest);
   border-radius: var(--radius-xl);
-  padding: var(--spacing-8);
+  padding: clamp(1rem, 3vh, var(--spacing-8));
   box-shadow: 0 40px 120px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--outline-variant);
-  transform: translateY(0);
+  display: flex;
+  flex-direction: column;       /* header | scrollable body | footer */
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 @keyframes slideUp {
@@ -376,7 +384,7 @@ body {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  padding: var(--spacing-4) 0;
+  padding: clamp(0.35rem, 1.5vh, var(--spacing-4)) 0;
   border-bottom: 1px solid var(--outline-variant);
 }
 

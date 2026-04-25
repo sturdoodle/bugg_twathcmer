@@ -46,11 +46,6 @@ export const FocusProvider = ({ children }) => {
     }
   }, [theme]);
 
-  // Apply Font
-  useEffect(() => {
-    const fontValue = settings.fontFamily === 'DSEG14' ? "'DSEG14', monospace" : `'${settings.fontFamily}', sans-serif`;
-    document.documentElement.style.setProperty('--app-font', fontValue);
-  }, [settings.fontFamily]);
 
   // Title update logic
   useEffect(() => {

@@ -2,8 +2,6 @@ import React from 'react';
 
 const IconWrapper = ({ children, size = 20, className = "" }) => (
   <svg 
-    width={size} 
-    height={size} 
     viewBox="0 0 24 24" 
     fill="none" 
     stroke="currentColor" 
@@ -11,7 +9,12 @@ const IconWrapper = ({ children, size = 20, className = "" }) => (
     strokeLinecap="round" 
     strokeLinejoin="round" 
     className={className}
-    style={{ transition: 'transform 0.3s ease' }}
+    style={{ 
+      width: size, 
+      height: size,
+      transition: 'transform 0.3s ease',
+      flexShrink: 0
+    }}
   >
     {children}
   </svg>

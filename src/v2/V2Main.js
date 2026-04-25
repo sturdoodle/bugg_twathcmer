@@ -45,15 +45,15 @@ const V2Main = () => {
         <div className="v2-controls">
           <button className="btn-ghost d-flex align-items-center" onClick={toggleTheme} style={{ gap: '0.5rem' }}>
             {theme === 'light' ? <MoonIcon size={18} /> : <SunIcon size={18} />}
-            <span className="label-hide-mobile">/ {theme === 'light' ? 'Dark' : 'Light'}</span>
+            <span className="label-hide-mobile"> {theme === 'light' ? 'Dark' : 'Light'}</span>
           </button>
           <button className="btn-ghost d-flex align-items-center" onClick={toggleFullscreen} style={{ gap: '0.5rem' }}>
             {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
-            <span className="label-hide-mobile">/ {isFullscreen ? 'Normal' : 'Full'}</span>
+            <span className="label-hide-mobile"> {isFullscreen ? 'Normal' : 'Full'}</span>
           </button>
           <button className="btn-ghost d-flex align-items-center" onClick={() => setShowSettings(true)} style={{ gap: '0.5rem' }}>
             <SettingsIcon size={18} />
-            <span className="label-hide-mobile">/ Settings</span>
+            <span className="label-hide-mobile"> Settings</span>
           </button>
         </div>
       </header>

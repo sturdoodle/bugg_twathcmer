@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { playCompletionTone } from './V2Sound';
 import './v2.css';
 
+
 const V2Timer = () => {
   const navigate = useNavigate();
   const { activeSession, tick, togglePause, endSession, theme, toggleTheme, settings } = useFocus();
@@ -73,7 +74,34 @@ const V2Timer = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Keep screen awake while timer is actively running
+  useEffect(() => {
+    if (!('wakeLock' in navigator)) return;
+    let wakeLock = null;
+
+    const acquire = async () => {
+      try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) { }
+    };
+    const release = () => {
+      if (wakeLock) { wakeLock.release(); wakeLock = null; }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && activeSession?.status === 'running') acquire();
+      else release();
+    };
+
+    if (activeSession?.status === 'running') acquire();
+    else release();
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      release();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [activeSession?.status]);
+
   const timerRef = useRef(null);
+
   const [timerBottom, setTimerBottom] = useState(null);
 
   // Track the bottom edge of the timer hero so the pill sits below it
@@ -129,40 +157,57 @@ const V2Timer = () => {
 
   const progress = ((activeSession.duration - activeSession.remaining) / activeSession.duration) * 100;
 
+  const fontValue = settings.fontFamily === 'DSEG14' ? "'DSEG14', monospace" : `'${settings.fontFamily}', sans-serif`;
+
   return (
-    <div className="v2-container active-timer-view">
+    <div className="v2-container active-timer-view" style={{ '--app-font': fontValue }}>
       {/* Distraction-free header for controls ... */}
       {!showConfirm && (
-        <header className="v2-header" style={{ position: 'absolute', top: 'var(--spacing-8)', left: 'var(--spacing-6)', right: 'var(--spacing-6)', marginBottom: 0 }}>
+        <motion.header
+          className="v2-header"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isDimmed ? 0.2 : 1 }}
+          transition={{ duration: 0.8, ease: 'easeInOut' }}
+          style={{ position: 'absolute', top: 'var(--spacing-8)', left: 'var(--spacing-6)', right: 'var(--spacing-6)', marginBottom: 0 }}
+        >
           <div />
           <div className="v2-controls">
             <button className="btn-ghost d-flex align-items-center" onClick={toggleTheme} style={{ gap: '0.5rem' }}>
               {theme === 'light' ? <MoonIcon size={18} /> : <SunIcon size={18} />}
-              <span className="label-hide-mobile">/ {theme === 'light' ? 'Dark' : 'Light'}</span>
+              <span className="label-hide-mobile"> {theme === 'light' ? 'Dark' : 'Light'}</span>
             </button>
             <button className="btn-ghost d-flex align-items-center" onClick={toggleFullscreen} style={{ gap: '0.5rem' }}>
               {isFullscreen ? <MinimizeIcon size={18} /> : <MaximizeIcon size={18} />}
-              <span className="label-hide-mobile">/ {isFullscreen ? 'Normal' : 'Full'}</span>
+              <span className="label-hide-mobile"> {isFullscreen ? 'Normal' : 'Full'}</span>
             </button>
           </div>
-        </header>
+        </motion.header>
       )}
 
       {showConfirm ? (
-        <div className="confirm-overlay">
-          <h2 className="title-lg" style={{ marginBottom: '1rem' }}>End this session?</h2>
-          <p className="body-md text-variant" style={{ marginBottom: '2.5rem' }}>
+        <div className="confirm-overlay" style={{ '--app-font': "'Outfit', sans-serif" }}>
+          <h2 className="title-lg" style={{ marginBottom: 'clamp(0.5rem, 2vh, 1rem)', fontSize: 'clamp(1rem, min(4vw, 4vh), 1.5rem)' }}>End this session?</h2>
+          <p className="body-md text-variant" style={{ marginBottom: 'clamp(1rem, 4vh, 2.5rem)', fontSize: 'clamp(0.75rem, min(3vw, 2.5vh), 1rem)', textAlign: 'center', maxWidth: '90%' }}>
             We'll record your progress so far, but the task will be marked incomplete.
           </p>
-          <div style={{ display: 'flex', gap: 'var(--spacing-4)', width: '100%', maxWidth: '320px' }}>
-            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setShowConfirm(false)}>
+          <div style={{ display: 'flex', gap: 'clamp(0.5rem, 2vw, 1rem)', width: '100%', maxWidth: 'min(320px, 90vw)' }}>
+            <button
+              className="btn-secondary"
+              style={{ flex: 1, padding: 'clamp(0.6rem, 2vh, 1rem) clamp(0.75rem, 3vw, 2.5rem)', fontSize: 'clamp(0.75rem, min(3vw, 2.5vh), 1rem)', whiteSpace: 'nowrap' }}
+              onClick={() => setShowConfirm(false)}
+            >
               Keep Going
             </button>
-            <button className="btn-primary" style={{ flex: 1 }} onClick={handleEndEarly}>
+            <button
+              className="btn-primary"
+              style={{ flex: 1, padding: 'clamp(0.6rem, 2vh, 1.25rem) clamp(0.75rem, 3vw, 3.5rem)', fontSize: 'clamp(0.75rem, min(3vw, 2.5vh), 1.1rem)', whiteSpace: 'nowrap' }}
+              onClick={handleEndEarly}
+            >
               End Early
             </button>
           </div>
         </div>
+
       ) : (
         <>
           <header className="timer-hero" ref={timerRef}>
@@ -172,8 +217,9 @@ const V2Timer = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div className="display-lg" style={{
                 color: activeSession.status === 'paused' ? 'var(--on-surface-variant)' : 'var(--on-surface)',
-                fontSize: isLedFont ? 'clamp(4rem, 12vw, 7rem)' : undefined,
+                fontSize: isLedFont ? 'clamp(2.5rem, min(12vw, 18vh), 7rem)' : undefined,
                 letterSpacing: isLedFont ? '0.1em' : undefined,
+                fontStyle: isLedFont ? 'italic' : 'normal',
                 fontVariantNumeric: 'tabular-nums',
                 display: 'flex',
                 alignItems: 'baseline',
@@ -230,7 +276,7 @@ const V2Timer = () => {
                   </>
                 )}
               </div>
-              <p className="label-md" style={{ marginTop: 'var(--spacing-4)', opacity: 0.5 }}>
+              <p className="label-md" style={{ marginTop: 'clamp(0.25rem, 1.5vh, var(--spacing-4))', opacity: 0.5, fontSize: 'clamp(0.6rem, min(2vw, 1.8vh), 0.8rem)' }}>
                 {activeSession.status === 'paused' ? 'Paused' : 'Remaining'}
               </p>
             </div>
@@ -241,7 +287,7 @@ const V2Timer = () => {
               <motion.div
                 initial={{ opacity: 0, x: '-50%' }}
                 animate={{
-                  opacity: isDimmed ? 0.2 : 1,
+                  opacity: isDimmed ? 0.1 : 1,
                   x: isDocked ? 'calc(50vw - 100% - var(--spacing-8))' : '-50%',
                 }}
                 exit={{ opacity: 0 }}
@@ -330,7 +376,7 @@ const V2Timer = () => {
                     onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.12)'}
                     onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}
                   >
-                    {activeSession.status === 'paused' ? <PlayIcon size={12} /> : <PauseIcon size={12} />}
+                    {activeSession.status === 'paused' ? <PlayIcon size="clamp(16px, 4vw, 22px)" /> : <PauseIcon size="clamp(16px, 4vw, 22px)" />}
                     <span>{activeSession.status === 'paused' ? 'Resume' : 'Pause'}</span>
                   </button>
                 </div>
