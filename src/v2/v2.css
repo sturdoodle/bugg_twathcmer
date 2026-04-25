@@ -458,7 +458,7 @@ body {
   }
 
   .v2-container {
-    padding: var(--spacing-6) var(--spacing-4);
+    padding: var(--spacing-4) var(--spacing-4);
   }
 
   .display-md {
@@ -470,19 +470,20 @@ body {
   }
 
   .v2-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-6);
-    margin-bottom: var(--spacing-8);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
   }
 
   .v2-header > div:first-child {
-    width: 100%;
+    width: auto;
   }
 
   .v2-controls {
-    width: 100%;
-    justify-content: flex-start;
+    width: auto;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: var(--spacing-1);
   }
@@ -496,8 +497,8 @@ body {
   }
 
   .card-selection {
-    padding: 1.25rem;
-    min-height: 160px;
+    padding: 1rem;
+    min-height: 110px;
   }
 
   .active-timer-view {

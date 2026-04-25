@@ -18,7 +18,7 @@ const V2Main = () => {
 
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },
-    { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.' },
+    { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.', mostUsed: true },
     { id: 'longBreak', title: 'Long Break', duration: settings.longBreak, label: 'Deep Recharge', description: 'Standard interval for longer rests.' },
     { id: 'deepWork', title: 'Deep Work', duration: settings.deepWork, label: 'Most Productive', description: 'Uninterrupted flow state session.', premium: true },
   ];
@@ -66,11 +66,8 @@ const V2Main = () => {
               className={`card-selection ${selectedType === option.id ? 'selected' : ''}`}
               onClick={() => setSelectedType(option.id)}
             >
-              {option.premium ? (
-                <span className="badge-chip">Most Productive</span>
-              ) : (
-                selectedType === option.id && <span className="badge-chip">Active</span>
-              )}
+              {option.premium && <span className="badge-chip">Most Productive</span>}
+              {option.mostUsed && <span className="badge-chip" style={{ background: 'var(--secondary)' }}>Most Used</span>}
 
               <div>
                 <h2 className="title-lg" style={{ marginBottom: '0.25rem' }}>{option.title}</h2>
@@ -80,16 +77,37 @@ const V2Main = () => {
               <p className="body-md text-variant" style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
                 {option.description}
               </p>
+
+              <div style={{ 
+                marginTop: '1.5rem', 
+                opacity: selectedType === option.id ? 1 : 0,
+                visibility: selectedType === option.id ? 'visible' : 'hidden',
+                transform: `translateY(${selectedType === option.id ? 0 : 10}px)`,
+                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+              }}>
+                <button 
+                  className="btn-primary" 
+                  style={{ 
+                    padding: '0.8rem 1.5rem', 
+                    fontSize: '0.9rem', 
+                    width: '100%', 
+                    gap: '0.6rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStart();
+                  }}
+                >
+                  <PlayIcon size={18} />
+                  <span>Start Session</span>
+                </button>
+              </div>
             </div>
           ))}
         </section>
-
-        <div style={{ marginTop: 'var(--spacing-16)', textAlign: 'center' }}>
-          <button className="btn-primary d-inline-flex align-items-center" onClick={handleStart} style={{ gap: '0.75rem' }}>
-            <PlayIcon size={20} />
-            <span>Start {timerOptions.find(o => o.id === selectedType).title}</span>
-          </button>
-        </div>
 
         {history.length > 0 && (
           <section className="history-section">
