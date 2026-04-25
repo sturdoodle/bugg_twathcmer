@@ -6,26 +6,32 @@ import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, PlayIcon, PauseIcon, Hom
 import { motion, AnimatePresence } from 'framer-motion';
 import { playCompletionTone } from './V2Sound';
 import './v2.css';
+const CELEBRATION_FONTS = [
+  'Bungee', 'Comfortaa', 'Inconsolata', 'JetBrains Mono', 
+  'Lobster Two', 'Lora', 'Plus Jakarta Sans', 'Rajdhani'
+];
 
-
-const PartyCharacter = ({ theme = 'subscriber' }) => (
-  <div className={`party-character ${theme}-theme`}>
-    <div className="character-hat">
-      <div className="hat-cone" />
-      <div className="hat-ball" />
-    </div>
-    <div className="character-body">
-      <div className="character-eye eye-left" />
-      <div className="character-eye eye-right" />
-      <div className="character-brow brow-left" />
-      <div className="character-brow brow-right" />
-      <div className="character-blush blush-left" />
-      <div className="character-blush blush-right" />
-      <div className="character-mouth" />
-      <div className="party-blower-css" />
-    </div>
-  </div>
+const CelebrationSuffix = ({ text, baseSize = 'clamp(3.5rem, 15vw, 8rem)' }) => (
+  <span className="display-lg" style={{ 
+    fontSize: baseSize, 
+    color: 'var(--primary)', 
+    lineHeight: 0.9,
+    display: 'inline-flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '0.02em'
+  }}>
+    {text.split('').map((char, i) => (
+      <span key={i} style={{ 
+        fontFamily: `"${CELEBRATION_FONTS[i % CELEBRATION_FONTS.length]}", sans-serif`,
+        display: 'inline-block'
+      }}>
+        {char === ' ' ? '\u00A0' : char}
+      </span>
+    ))}
+  </span>
 );
+
 
 const BirthdayCelebration = () => {
   const balloons = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
@@ -48,13 +54,7 @@ const BirthdayCelebration = () => {
 
   return (
     <div className="birthday-container">
-      <div className="character-side side-left">
-        <PartyCharacter theme="birthday" />
-      </div>
-      <div className="character-side side-right">
-        <PartyCharacter theme="birthday" />
-      </div>
-      <PartyCharacter theme="birthday" />
+
       {balloons.map((b) => (
         <div 
           key={b.id} 
@@ -117,13 +117,7 @@ const SubscriberCelebration = () => {
 
   return (
     <div className="subscriber-container">
-      <div className="character-side side-left">
-        <PartyCharacter />
-      </div>
-      <div className="character-side side-right">
-        <PartyCharacter />
-      </div>
-      <PartyCharacter />
+
       <div className="rocket">🚀</div>
       {stars.map((s) => (
         <div 
@@ -349,9 +343,45 @@ const V2Timer = () => {
                   <SunIcon size={64} />
                 </div>
               )}
-              <h2 className="display-md" style={{ marginBottom: '1rem', color: 'var(--on-surface)', fontSize: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
-                {activeSession.type === 'goal' ? (activeSession.completionMessage || "Goal Reached!") : "Session Completed!"}
-              </h2>
+              {(() => {
+                const msg = activeSession.type === 'goal' ? (activeSession.completionMessage || "Goal Reached!") : "Session Completed!";
+                
+                if (activeSession.milestoneType === 'birthday' && msg.toLowerCase().startsWith('happy birthday')) {
+                  const name = msg.substring(14).trim();
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                      <span className="title-lg" style={{ opacity: 0.7, fontWeight: 500, letterSpacing: '0.05em' }}>Happy Birthday</span>
+                      <CelebrationSuffix text={name} />
+                    </div>
+                  );
+                }
+
+                if (activeSession.milestoneType === 'subscriber' && msg.includes('New Subscriber Milestone!')) {
+                  const suffix = msg.replace('New Subscriber Milestone!', '').trim();
+                  if (suffix) {
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        <span className="title-lg" style={{ opacity: 0.7, fontWeight: 500, letterSpacing: '0.05em' }}>New Subscriber Milestone!</span>
+                        <CelebrationSuffix text={suffix} />
+                      </div>
+                    );
+                  }
+                }
+
+                if (activeSession.milestoneType === 'custom' || activeSession.milestoneType === 'other') {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                      <CelebrationSuffix text={msg} />
+                    </div>
+                  );
+                }
+
+                return (
+                  <h2 className="display-md" style={{ marginBottom: '1rem', color: 'var(--on-surface)', fontSize: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
+                    {msg}
+                  </h2>
+                );
+              })()}
               {(!activeSession.milestoneType || activeSession.milestoneType === 'custom') && (
                 <p className="body-md text-variant" style={{ marginBottom: '2.5rem', opacity: 0.7 }}>
                   {activeSession.type === 'goal' ? "Your target milestone has been reached." : "Great job staying focused on your task!"}
