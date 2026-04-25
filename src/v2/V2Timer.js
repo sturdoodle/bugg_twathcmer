@@ -13,19 +13,6 @@ const V2Timer = () => {
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [showConfirm, setShowConfirm] = useState(false);
 
-  useEffect(() => {
-    const handleKeyUp = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        toggleFullscreen();
-      }
-    };
-
-    window.addEventListener('keyup', handleKeyUp);
-    return () => window.removeEventListener('keyup', handleKeyUp);
-  }, [toggleFullscreen]);
-
 
   const isLedFont = settings.fontFamily === 'DSEG14';
 

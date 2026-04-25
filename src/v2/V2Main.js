@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './v2.css';
 import { useFocus } from './useFocusStore';
@@ -14,19 +14,6 @@ const V2Main = () => {
   const [selectedType, setSelectedType] = useState('pomodoro');
   const [showSettings, setShowSettings] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-
-  useEffect(() => {
-    const handleKeyUp = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        toggleFullscreen();
-      }
-    };
-
-    window.addEventListener('keyup', handleKeyUp);
-    return () => window.removeEventListener('keyup', handleKeyUp);
-  }, [toggleFullscreen]);
 
 
   const timerOptions = [
