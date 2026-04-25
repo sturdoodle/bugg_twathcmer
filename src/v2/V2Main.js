@@ -16,7 +16,7 @@ const V2Main = () => {
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyUp = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.key.toLowerCase() === 'f') {
         e.preventDefault();
@@ -24,9 +24,10 @@ const V2Main = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => window.removeEventListener('keyup', handleKeyUp);
   }, [toggleFullscreen]);
+
 
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },

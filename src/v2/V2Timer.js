@@ -14,7 +14,7 @@ const V2Timer = () => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyUp = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.key.toLowerCase() === 'f') {
         e.preventDefault();
@@ -22,9 +22,10 @@ const V2Timer = () => {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => window.removeEventListener('keyup', handleKeyUp);
   }, [toggleFullscreen]);
+
 
   const isLedFont = settings.fontFamily === 'DSEG14';
 
