@@ -3,19 +3,26 @@ import { useState, useEffect, useCallback } from 'react';
 export const useFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const toggleFullscreen = useCallback(async () => {
+  const toggleFullscreen = useCallback(() => {
     try {
       if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.error(`Error attempting to enable fullscreen: ${err.message}`);
+          });
+        }
       } else {
         if (document.exitFullscreen) {
-          await document.exitFullscreen();
+          document.exitFullscreen().catch(err => {
+            console.error(`Error attempting to exit fullscreen: ${err.message}`);
+          });
         }
       }
     } catch (err) {
-      console.error(`Error attempting to toggle fullscreen: ${err.message}`);
+      console.error(`Error toggling fullscreen: ${err.message}`);
     }
   }, []);
+
 
   useEffect(() => {
     const handleFullscreenChange = () => {

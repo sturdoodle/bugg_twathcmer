@@ -15,6 +15,19 @@ const V2Main = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleFullscreen]);
+
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },
     { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.' },
