@@ -8,6 +8,25 @@ import { playCompletionTone } from './V2Sound';
 import './v2.css';
 
 
+const PartyCharacter = ({ theme = 'subscriber' }) => (
+  <div className={`party-character ${theme}-theme`}>
+    <div className="character-hat">
+      <div className="hat-cone" />
+      <div className="hat-ball" />
+    </div>
+    <div className="character-body">
+      <div className="character-eye eye-left" />
+      <div className="character-eye eye-right" />
+      <div className="character-brow brow-left" />
+      <div className="character-brow brow-right" />
+      <div className="character-blush blush-left" />
+      <div className="character-blush blush-right" />
+      <div className="character-mouth" />
+      <div className="party-blower-css" />
+    </div>
+  </div>
+);
+
 const BirthdayCelebration = () => {
   const balloons = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
     id: `b-${i}`,
@@ -29,6 +48,13 @@ const BirthdayCelebration = () => {
 
   return (
     <div className="birthday-container">
+      <div className="character-side side-left">
+        <PartyCharacter theme="birthday" />
+      </div>
+      <div className="character-side side-right">
+        <PartyCharacter theme="birthday" />
+      </div>
+      <PartyCharacter theme="birthday" />
       {balloons.map((b) => (
         <div 
           key={b.id} 
@@ -59,6 +85,71 @@ const BirthdayCelebration = () => {
             willChange: 'transform, opacity'
           }}
         />
+      ))}
+    </div>
+  );
+};
+
+
+const SubscriberCelebration = () => {
+  const particles = useMemo(() => Array.from({ length: 30 }).map((_, i) => {
+    const angle = (i / 30) * Math.PI * 2;
+    const distance = 200 + Math.random() * 300;
+    return {
+      id: `p-${i}`,
+      tx: `${Math.cos(angle) * distance}px`,
+      ty: `${Math.sin(angle) * distance}px`,
+      rot: `${Math.random() * 360}deg`,
+      emoji: ['✨', '⭐', '🔥', '🎉', '🚀', '💫'][i % 6]
+    };
+  }), []);
+
+  const stars = useMemo(() => Array.from({ length: 50 }).map((_, i) => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 150 + Math.random() * 400;
+    return {
+      id: `s-${i}`,
+      tx: `${Math.cos(angle) * distance}px`,
+      ty: `${Math.sin(angle) * distance}px`,
+      color: ['#FFD700', '#FF4500', '#00BFFF', '#ADFF2F', '#FF00FF'][i % 5]
+    };
+  }), []);
+
+  return (
+    <div className="subscriber-container">
+      <div className="character-side side-left">
+        <PartyCharacter />
+      </div>
+      <div className="character-side side-right">
+        <PartyCharacter />
+      </div>
+      <PartyCharacter />
+      <div className="rocket">🚀</div>
+      {stars.map((s) => (
+        <div 
+          key={s.id} 
+          className="star-burst" 
+          style={{ 
+            '--tx': s.tx, 
+            '--ty': s.ty, 
+            background: s.color,
+            willChange: 'transform, opacity'
+          }} 
+        />
+      ))}
+      {particles.map((p) => (
+        <div 
+          key={p.id} 
+          className="subscriber-particle" 
+          style={{ 
+            '--tx': p.tx, 
+            '--ty': p.ty, 
+            '--rot': p.rot,
+            willChange: 'transform, opacity'
+          }}
+        >
+          {p.emoji}
+        </div>
       ))}
     </div>
   );
@@ -245,6 +336,7 @@ const V2Timer = () => {
             }}
           >
             {activeSession.milestoneType === 'birthday' && <BirthdayCelebration />}
+            {activeSession.milestoneType === 'subscriber' && <SubscriberCelebration />}
 
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
