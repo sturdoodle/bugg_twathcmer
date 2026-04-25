@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocus } from './useFocusStore';
 import { useFullscreen } from './useFullscreen';
@@ -32,6 +32,31 @@ const V2Timer = () => {
   }, [activeSession, tick, navigate]);
 
   const [isDocked, setIsDocked] = useState(false);
+  const [isDimmed, setIsDimmed] = useState(false);
+
+  // Auto-dim after 20 s of inactivity; any interaction wakes it up
+  useEffect(() => {
+    let dimTimer = setTimeout(() => setIsDimmed(true), 20000);
+
+    const wake = () => {
+      setIsDimmed(false);
+      clearTimeout(dimTimer);
+      dimTimer = setTimeout(() => setIsDimmed(true), 20000);
+    };
+
+    window.addEventListener('mousemove', wake);
+    window.addEventListener('mousedown', wake);
+    window.addEventListener('touchstart', wake);
+    window.addEventListener('keydown', wake);
+
+    return () => {
+      clearTimeout(dimTimer);
+      window.removeEventListener('mousemove', wake);
+      window.removeEventListener('mousedown', wake);
+      window.removeEventListener('touchstart', wake);
+      window.removeEventListener('keydown', wake);
+    };
+  }, []);
 
   useEffect(() => {
     if (activeSession?.status === 'completed') {
@@ -48,11 +73,33 @@ const V2Timer = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const timerRef = useRef(null);
+  const [timerBottom, setTimerBottom] = useState(null);
+
+  // Track the bottom edge of the timer hero so the pill sits below it
+  useEffect(() => {
+    const el = timerRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setTimerBottom(rect.bottom);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
   const [ms, setMs] = useState(99);
+
 
   useEffect(() => {
     if (activeSession?.status !== 'running' || !settings.showMilliseconds) return;
-    
+
     setMs(99);
     const startTime = Date.now();
     let animationFrameId;
@@ -118,12 +165,12 @@ const V2Timer = () => {
         </div>
       ) : (
         <>
-          <header className="timer-hero">
+          <header className="timer-hero" ref={timerRef}>
             <h1 className="label-md timer-type-label">
               {activeSession.type.replace(/([A-Z])/g, ' $1').trim()}
             </h1>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div className="display-lg" style={{ 
+              <div className="display-lg" style={{
                 color: activeSession.status === 'paused' ? 'var(--on-surface-variant)' : 'var(--on-surface)',
                 fontSize: isLedFont ? 'clamp(4rem, 12vw, 7rem)' : undefined,
                 letterSpacing: isLedFont ? '0.1em' : undefined,
@@ -192,50 +239,117 @@ const V2Timer = () => {
           <AnimatePresence>
             {!showConfirm && (
               <motion.div
-                initial={{ opacity: 0, y: '-25vh', x: '-50%' }}
-                animate={{ 
-                  opacity: 1, 
+                initial={{ opacity: 0, x: '-50%' }}
+                animate={{
+                  opacity: isDimmed ? 0.2 : 1,
                   x: isDocked ? 'calc(50vw - 100% - var(--spacing-8))' : '-50%',
-                  y: isDocked ? 0 : '-25vh',
                 }}
-                exit={{ opacity: 0, y: 50 }}
-                transition={{ 
-                  type: 'spring', 
-                  damping: 30, 
+                exit={{ opacity: 0 }}
+                transition={{
+                  type: 'spring',
+                  damping: 30,
                   stiffness: 120,
-                  mass: 0.8
+                  mass: 0.8,
+                  opacity: { duration: 0.8, ease: 'easeInOut' },
                 }}
-                style={{ 
+                style={{
                   position: 'fixed',
-                  bottom: 'var(--spacing-8)',
+                  // Centered: sit 20px below the timer; Docked: snap to bottom edge
+                  top: isDocked ? 'auto' : (timerBottom != null ? `${timerBottom + 20}px` : '65vh'),
+                  bottom: isDocked ? 'var(--spacing-8)' : 'auto',
                   left: '50%',
-                  zIndex: 1000, 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  gap: 'var(--spacing-4)',
-                  padding: 'var(--spacing-4)',
-                  background: 'var(--surface-container-low)',
-                  borderRadius: 'var(--radius-xl)',
-                  boxShadow: isDocked ? '0 20px 50px rgba(0,0,0,0.1)' : '0 40px 100px rgba(0,0,0,0.15)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid var(--outline-variant)',
-                  width: '320px',
+                  zIndex: 1000,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: '10px',
+                  width: 'min(300px, 45vw, 35vh)',
                   maxWidth: 'calc(100vw - 2rem)',
                 }}
               >
-                <div style={{ display: 'flex', gap: 'var(--spacing-4)', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
-                  <button className="btn-ghost d-flex align-items-center" style={{ padding: '0.75rem 1rem', gap: '0.5rem', fontSize: '0.85rem' }} onClick={() => setShowConfirm(true)}>
-                    <XIcon size={16} />
-                    <span className="label-hide-mobile">/ End</span>
+                {/* Split-pill: left = Stop, right = Pause */}
+                <div style={{
+                  display: 'flex',
+                  borderRadius: 'var(--radius-full)',
+                  overflow: 'hidden',
+                  boxShadow: isDocked ? '0 20px 50px rgba(0,0,0,0.12)' : '0 40px 100px rgba(0,0,0,0.18)',
+                  border: '1px solid var(--outline-variant)',
+                  backdropFilter: 'blur(10px)',
+                }}>
+                  {/* Left half — Stop */}
+                  <button
+                    onClick={() => setShowConfirm(true)}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 'clamp(0.2rem, min(1vw, 1.8vh), 0.45rem)',
+                      padding: 'clamp(0.4rem, min(2vw, 3vh), 0.8rem) clamp(0.35rem, min(1.5vw, 2.5vh), 1rem)',
+                      background: 'var(--surface-container-low)',
+                      color: 'var(--on-surface)',
+                      border: 'none',
+                      borderRight: '1px solid var(--outline-variant)',
+                      cursor: 'pointer',
+                      fontSize: 'clamp(0.55rem, min(2.2vw, 3.5vh), 0.82rem)',
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-body)',
+                      backdropFilter: 'blur(10px)',
+                      transition: 'background 0.2s',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-container)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-container-low)'}
+                  >
+                    {/* <XIcon size={12} /> */}
+                    <span>X | End</span>
                   </button>
-                  <button className="btn-primary d-flex align-items-center" style={{ padding: '0.75rem 2rem', gap: '0.75rem', fontSize: '0.85rem', flex: 1, justifyContent: 'center' }} onClick={togglePause}>
-                    {activeSession.status === 'paused' ? <PlayIcon size={18} /> : <PauseIcon size={18} />}
+
+                  {/* Right half — Pause / Resume */}
+                  <button
+                    onClick={togglePause}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 'clamp(0.2rem, min(1vw, 1.8vh), 0.5rem)',
+                      padding: 'clamp(0.4rem, min(2vw, 3vh), 0.8rem) clamp(0.35rem, min(1.5vw, 2.5vh), 1rem)',
+                      background: 'var(--primary)',
+                      color: 'var(--on-primary)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'clamp(0.55rem, min(2.2vw, 3.5vh), 0.82rem)',
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-body)',
+                      transition: 'filter 0.2s',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.12)'}
+                    onMouseLeave={e => e.currentTarget.style.filter = 'brightness(1)'}
+                  >
+                    {activeSession.status === 'paused' ? <PlayIcon size={12} /> : <PauseIcon size={12} />}
                     <span>{activeSession.status === 'paused' ? 'Resume' : 'Pause'}</span>
                   </button>
                 </div>
-                <div className="progress-container" style={{ margin: 0, height: '4px', width: '100%' }}>
-                  <div className="progress-fill" style={{ width: `${progress}%` }} />
+
+                {/* Progress bar — below the pill */}
+                <div style={{
+                  width: '100%',
+                  height: '3px',
+                  background: 'var(--surface-container-high)',
+                  borderRadius: 'var(--radius-full)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, var(--primary), var(--primary-container))',
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'width 1s linear',
+                  }} />
                 </div>
               </motion.div>
             )}
