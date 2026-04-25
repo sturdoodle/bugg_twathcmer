@@ -1,12 +1,68 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocus } from './useFocusStore';
 import { useFullscreen } from './useFullscreen';
-import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, PlayIcon, PauseIcon } from './V2Icons';
+import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, PlayIcon, PauseIcon, HomeIcon } from './V2Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playCompletionTone } from './V2Sound';
 import './v2.css';
 
+
+const BirthdayCelebration = () => {
+  const balloons = useMemo(() => Array.from({ length: 15 }).map((_, i) => ({
+    id: `b-${i}`,
+    left: `${Math.random() * 90 + 5}%`,
+    color: ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#ff924c', '#ff006e', '#fb5607', '#3a86ff'][i % 9],
+    delay: `${Math.random() * 6}s`,
+    duration: `${7 + Math.random() * 5}s`,
+    zIndex: Math.floor(Math.random() * 10)
+  })), []);
+
+  const confetti = useMemo(() => Array.from({ length: 60 }).map((_, i) => ({
+    id: `c-${i}`,
+    left: `${Math.random() * 100}%`,
+    color: ['#ff595e', '#ffca3a', '#8ac926', '#1982c4', '#6a4c93', '#ff924c', '#ff006e', '#fb5607', '#3a86ff'][i % 9],
+    delay: `${Math.random() * 5}s`,
+    size: `${6 + Math.random() * 12}px`,
+    isRound: i % 2 === 0
+  })), []);
+
+  return (
+    <div className="birthday-container">
+      {balloons.map((b) => (
+        <div 
+          key={b.id} 
+          className="balloon" 
+          style={{ 
+            left: b.left, 
+            background: b.color,
+            animationDelay: b.delay,
+            animationDuration: b.duration,
+            zIndex: b.zIndex,
+            willChange: 'transform, opacity'
+          }}
+        >
+          <div className="balloon-string" />
+        </div>
+      ))}
+      {confetti.map((c) => (
+        <div 
+          key={c.id} 
+          className="confetti-piece" 
+          style={{ 
+            left: c.left, 
+            background: c.color,
+            animationDelay: c.delay,
+            width: c.size,
+            height: c.size,
+            borderRadius: c.isRound ? '50%' : '2px',
+            willChange: 'transform, opacity'
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const V2Timer = () => {
   const navigate = useNavigate();
@@ -175,7 +231,7 @@ const V2Timer = () => {
             className="confirm-overlay" 
             style={{ 
               '--app-font': "'Outfit', sans-serif", 
-              backdropFilter: 'blur(20px)', 
+              backdropFilter: 'blur(16px)', 
               background: theme === 'dark' ? 'rgba(10, 10, 10, 0.95)' : 'rgba(255, 255, 255, 0.95)', 
               zIndex: 2000,
               position: 'fixed',
@@ -184,34 +240,71 @@ const V2Timer = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              overflow: 'hidden'
             }}
           >
+            {activeSession.milestoneType === 'birthday' && <BirthdayCelebration />}
+
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              style={{ textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              style={{ textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}
             >
-              <div style={{ color: 'var(--primary)', marginBottom: '1.5rem' }}>
-                <SunIcon size={64} />
-              </div>
+              {(!activeSession.milestoneType || activeSession.milestoneType === 'custom') && (
+                <div style={{ color: 'var(--primary)', marginBottom: '1.5rem' }}>
+                  <SunIcon size={64} />
+                </div>
+              )}
               <h2 className="display-md" style={{ marginBottom: '1rem', color: 'var(--on-surface)', fontSize: 'clamp(1.5rem, 5vw, 2.5rem)' }}>
                 {activeSession.type === 'goal' ? (activeSession.completionMessage || "Goal Reached!") : "Session Completed!"}
               </h2>
-              <p className="body-md text-variant" style={{ marginBottom: '2.5rem', opacity: 0.7 }}>
-                {activeSession.type === 'goal' ? "Your target milestone has been reached." : "Great job staying focused on your task!"}
-              </p>
-              <button 
-                className="btn-primary" 
+              {(!activeSession.milestoneType || activeSession.milestoneType === 'custom') && (
+                <p className="body-md text-variant" style={{ marginBottom: '2.5rem', opacity: 0.7 }}>
+                  {activeSession.type === 'goal' ? "Your target milestone has been reached." : "Great job staying focused on your task!"}
+                </p>
+              )}
+              <motion.button 
+                key="back-home"
+                initial={{ opacity: 0, scale: 0.9, x: 20 }}
+                animate={{ 
+                  opacity: isLabelsDimmed ? 0.1 : 1, 
+                  scale: 1, 
+                  x: 0 
+                }}
+                transition={{ 
+                  delay: activeSession.status === 'completed' ? 1.2 : 0,
+                  duration: 0.6, 
+                  type: 'spring', 
+                  stiffness: 100 
+                }}
+                className="btn-ghost" 
                 onClick={() => {
                   endSession(true);
                   navigate('/');
                 }}
-                style={{ padding: '1rem 3rem', minWidth: '200px' }}
+                title="Back to Home"
+                style={{ 
+                  position: 'fixed', 
+                  top: 'var(--spacing-8)', 
+                  right: 'var(--spacing-8)', 
+                  padding: '0.75rem', 
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--surface-container-high)',
+                  borderRadius: 'var(--radius-full)',
+                  zIndex: 3000,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid var(--outline-variant)'
+                }}
               >
-                Back to Home
-              </button>
+                <HomeIcon size={22} />
+              </motion.button>
             </motion.div>
           </motion.div>
         ) : (

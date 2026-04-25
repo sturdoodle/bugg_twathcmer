@@ -79,7 +79,7 @@ export const FocusProvider = ({ children }) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
-  const startSession = (type, durationMinutes, targetTimestamp = null, completionMessage = null) => {
+  const startSession = (type, durationMinutes, targetTimestamp = null, completionMessage = null, milestoneType = null) => {
     const startTime = new Date().toISOString();
     let durationSeconds = durationMinutes * 60;
     
@@ -96,6 +96,7 @@ export const FocusProvider = ({ children }) => {
       startTime,
       targetTimestamp,
       completionMessage,
+      milestoneType,
       status: 'running',
     });
   };

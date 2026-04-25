@@ -19,6 +19,13 @@ const V2Main = () => {
   const [targetDateTime, setTargetDateTime] = useState('');
   const [goalMessage, setGoalMessage] = useState('');
   
+  const milestones = [
+    { id: 'birthday', label: 'Birthday 🎂', text: 'Happy Birthday' },
+    { id: 'subscriber', label: 'Subscriber 🚀', text: 'New Subscriber Milestone!' },
+    { id: 'custom', label: 'Custom ✨', text: '' },
+  ];
+  const [selectedMilestone, setSelectedMilestone] = useState(milestones[0].id);
+
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },
     { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.', mostUsed: true },
@@ -32,7 +39,12 @@ const V2Main = () => {
     const option = timerOptions.find(o => o.id === selectedType);
     if (selectedType === 'goal') {
       if (!targetDateTime) return;
-      startSession(selectedType, 0, targetDateTime, goalMessage);
+      const milestone = milestones.find(m => m.id === selectedMilestone);
+      const fullMessage = selectedMilestone === 'custom' 
+        ? goalMessage 
+        : (milestone.text + (goalMessage ? ` ${goalMessage}` : ''));
+      
+      startSession(selectedType, 0, targetDateTime, fullMessage, selectedMilestone);
     } else {
       startSession(selectedType, option.duration);
     }
@@ -89,6 +101,30 @@ const V2Main = () => {
 
               {option.isEvent && selectedType === option.id && (
                 <div style={{ marginTop: '1.25rem' }}>
+                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.6rem', display: 'block', opacity: 0.6 }}>Select Milestone</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    {milestones.map(m => (
+                      <button 
+                        key={m.id}
+                        onClick={(e) => { e.stopPropagation(); setSelectedMilestone(m.id); }}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          borderRadius: 'var(--radius-full)',
+                          background: selectedMilestone === m.id ? 'var(--primary)' : 'var(--surface-container-high)',
+                          color: selectedMilestone === m.id ? 'var(--on-primary)' : 'var(--on-surface)',
+                          border: 'none',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: selectedMilestone === m.id ? '0 4px 12px rgba(179, 27, 35, 0.2)' : 'none'
+                        }}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>Target Date & Time</label>
                   <input
                     type="datetime-local"
@@ -115,12 +151,14 @@ const V2Main = () => {
                     onBlur={(e) => e.target.style.borderColor = 'var(--outline-variant)'}
                   />
 
-                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>Completion Message</label>
+                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>
+                    {selectedMilestone === 'custom' ? 'Completion Message' : 'Add Suffix Message'}
+                  </label>
                   <input
                     type="text"
-                    placeholder="e.g. Milestone Reached!"
+                    placeholder={selectedMilestone === 'custom' ? "e.g. Milestone Reached!" : "e.g. Name or specific note"}
                     value={goalMessage}
-                    onChange={(e) => setGoalMessage(e.target.value)}
+                    onChange={(e) => setGoalMessage(e.target.value.slice(0, 50))}
                     onClick={(e) => e.stopPropagation()}
                     style={{ 
                       width: '100%', 
