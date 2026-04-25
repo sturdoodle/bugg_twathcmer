@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFocus } from './useFocusStore';
 import { useFullscreen } from './useFullscreen';
-import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, XIcon, PlayIcon, PauseIcon } from './V2Icons';
+import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, PlayIcon, PauseIcon } from './V2Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playCompletionTone } from './V2Sound';
 import './v2.css';
@@ -34,15 +34,20 @@ const V2Timer = () => {
 
   const [isDocked, setIsDocked] = useState(false);
   const [isDimmed, setIsDimmed] = useState(false);
+  const [isLabelsDimmed, setIsLabelsDimmed] = useState(false);
 
-  // Auto-dim after 20 s of inactivity; any interaction wakes it up
+  // Auto-dim logic: labels dim almost instantly (200ms), controls dim after 20s
   useEffect(() => {
-    let dimTimer = setTimeout(() => setIsDimmed(true), 20000);
+    let dimTimer = setTimeout(() => setIsDimmed(true), 10000);
+    let labelTimer = setTimeout(() => setIsLabelsDimmed(true), 200);
 
     const wake = () => {
       setIsDimmed(false);
+      setIsLabelsDimmed(false);
       clearTimeout(dimTimer);
-      dimTimer = setTimeout(() => setIsDimmed(true), 20000);
+      clearTimeout(labelTimer);
+      dimTimer = setTimeout(() => setIsDimmed(true), 10000);
+      labelTimer = setTimeout(() => setIsLabelsDimmed(true), 200);
     };
 
     window.addEventListener('mousemove', wake);
@@ -52,6 +57,7 @@ const V2Timer = () => {
 
     return () => {
       clearTimeout(dimTimer);
+      clearTimeout(labelTimer);
       window.removeEventListener('mousemove', wake);
       window.removeEventListener('mousedown', wake);
       window.removeEventListener('touchstart', wake);
@@ -211,9 +217,13 @@ const V2Timer = () => {
       ) : (
         <>
           <header className="timer-hero" ref={timerRef}>
-            <h1 className="label-md timer-type-label">
-              {activeSession.type.replace(/([A-Z])/g, ' $1').trim()}
-            </h1>
+            <motion.h1
+              className="label-md timer-type-label"
+              animate={{ opacity: isLabelsDimmed ? 0.05 : 1 }}
+              transition={{ duration: 0.8 }}
+            >
+              QPKENDRA
+            </motion.h1>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <div className="display-lg" style={{
                 color: activeSession.status === 'paused' ? 'var(--on-surface-variant)' : 'var(--on-surface)',
@@ -223,62 +233,66 @@ const V2Timer = () => {
                 fontVariantNumeric: 'tabular-nums',
                 display: 'flex',
                 alignItems: 'baseline',
-                gap: '0.1em'
+                gap: '0.05em'
               }}>
-                {hours > 0 && (
-                  <>
-                    <span>{hours.toString().padStart(2, '0')}</span>
-                    <span style={{ opacity: 0.3, alignSelf: 'center' }}>:</span>
-                  </>
-                )}
-                <span>{minutes.toString().padStart(2, '0')}</span>
-                {settings.showMilliseconds ? (
-                  <>
-                    <span style={{ opacity: 0.3, alignSelf: 'center' }}>:</span>
+                {/* Reusable Digit Segment Animation */}
+                {(() => {
+                  const renderSegment = (value, key) => (
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <span style={{ visibility: 'hidden' }}>00</span>
-                      <AnimatePresence>
+                      <AnimatePresence mode="popLayout">
                         <motion.span
-                          key={seconds}
-                          initial={{ y: '50%', opacity: 0 }}
-                          animate={{ y: '0%', opacity: 1 }}
-                          exit={{ y: '-50%', opacity: 0 }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          key={value}
+                          initial={{ y: '25%', opacity: 0, filter: 'blur(8px)' }}
+                          animate={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
+                          exit={{ y: '-25%', opacity: 0, filter: 'blur(8px)' }}
+                          transition={{
+                            type: 'spring',
+                            stiffness: 400,
+                            damping: 28,
+                            mass: 0.5,
+                            opacity: { duration: 0.2 }
+                          }}
                           style={{ position: 'absolute', left: 0, top: 0, width: '100%', textAlign: 'center' }}
                         >
-                          {seconds.toString().padStart(2, '0')}
+                          {value.toString().padStart(2, '0')}
                         </motion.span>
                       </AnimatePresence>
                     </div>
-                    <span style={{ opacity: 0.3 }}>.</span>
-                    <span style={{ fontSize: '0.4em', opacity: 0.6 }}>
-                      {ms.toString().padStart(2, '0')}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ opacity: 0.3, alignSelf: 'center' }}>:</span>
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <span style={{ visibility: 'hidden' }}>00</span>
-                      <AnimatePresence>
-                        <motion.span
-                          key={seconds}
-                          initial={{ y: '50%', opacity: 0 }}
-                          animate={{ y: '0%', opacity: 1 }}
-                          exit={{ y: '-50%', opacity: 0 }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
-                          style={{ position: 'absolute', left: 0, top: 0, width: '100%', textAlign: 'center' }}
-                        >
-                          {seconds.toString().padStart(2, '0')}
-                        </motion.span>
-                      </AnimatePresence>
-                    </div>
-                  </>
-                )}
+                  );
+
+                  return (
+                    <>
+                      {hours > 0 && (
+                        <>
+                          {renderSegment(hours, 'hours')}
+                          <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
+                        </>
+                      )}
+                      {renderSegment(minutes, 'minutes')}
+                      <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
+                      {renderSegment(seconds, 'seconds')}
+
+                      {settings.showMilliseconds && (
+                        <>
+                          <span style={{ opacity: 0.3, margin: '0 0.05em' }}>.</span>
+                          <span style={{ fontSize: '0.45em', opacity: 0.6, width: '1.2em', textAlign: 'left' }}>
+                            {ms.toString().padStart(2, '0')}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
-              <p className="label-md" style={{ marginTop: 'clamp(0.25rem, 1.5vh, var(--spacing-4))', opacity: 0.5, fontSize: 'clamp(0.6rem, min(2vw, 1.8vh), 0.8rem)' }}>
+              <motion.p
+                className="label-md"
+                animate={{ opacity: isLabelsDimmed ? 0.05 : 1 }}
+                transition={{ duration: 0.8 }}
+                style={{ marginTop: 'clamp(0.25rem, 1.5vh, var(--spacing-4))', fontSize: 'clamp(0.6rem, min(2vw, 1.8vh), 0.8rem)' }}
+              >
                 {activeSession.status === 'paused' ? 'Paused' : 'Remaining'}
-              </p>
+              </motion.p>
             </div>
           </header>
 
@@ -287,7 +301,7 @@ const V2Timer = () => {
               <motion.div
                 initial={{ opacity: 0, x: '-50%' }}
                 animate={{
-                  opacity: isDimmed ? 0.1 : 1,
+                  opacity: isDimmed ? 0.05 : 1,
                   x: isDocked ? 'calc(50vw - 100% - var(--spacing-8))' : '-50%',
                 }}
                 exit={{ opacity: 0 }}
