@@ -444,7 +444,6 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 100;
-  border-radius: var(--radius-lg);
   text-align: center;
   padding: 2rem;
   animation: fadeIn 0.3s ease;

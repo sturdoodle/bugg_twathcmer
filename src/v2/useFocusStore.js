@@ -79,13 +79,23 @@ export const FocusProvider = ({ children }) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
-  const startSession = (type, durationMinutes) => {
+  const startSession = (type, durationMinutes, targetTimestamp = null, completionMessage = null) => {
     const startTime = new Date().toISOString();
+    let durationSeconds = durationMinutes * 60;
+    
+    if (targetTimestamp) {
+      const now = new Date().getTime();
+      const target = new Date(targetTimestamp).getTime();
+      durationSeconds = Math.max(0, Math.floor((target - now) / 1000));
+    }
+
     setActiveSession({
       type,
-      duration: durationMinutes * 60,
-      remaining: durationMinutes * 60,
+      duration: durationSeconds,
+      remaining: durationSeconds,
       startTime,
+      targetTimestamp,
+      completionMessage,
       status: 'running',
     });
   };

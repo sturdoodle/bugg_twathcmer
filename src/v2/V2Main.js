@@ -16,17 +16,26 @@ const V2Main = () => {
   const [isClearing, setIsClearing] = useState(false);
 
 
+  const [targetDateTime, setTargetDateTime] = useState('');
+  const [goalMessage, setGoalMessage] = useState('');
+  
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },
     { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.', mostUsed: true },
     { id: 'longBreak', title: 'Long Break', duration: settings.longBreak, label: 'Deep Recharge', description: 'Standard interval for longer rests.' },
     { id: 'deepWork', title: 'Deep Work', duration: settings.deepWork, label: 'Most Productive', description: 'Uninterrupted flow state session.', premium: true },
+    { id: 'goal', title: 'Goal', label: 'Countdown', description: 'Track time remaining to a specific future date.', isEvent: true },
   ];
 
   const handleStart = () => {
     unlockAudio();
     const option = timerOptions.find(o => o.id === selectedType);
-    startSession(selectedType, option.duration);
+    if (selectedType === 'goal') {
+      if (!targetDateTime) return;
+      startSession(selectedType, 0, targetDateTime, goalMessage);
+    } else {
+      startSession(selectedType, option.duration);
+    }
     navigate('/timer');
   };
 
@@ -78,6 +87,59 @@ const V2Main = () => {
                 {option.description}
               </p>
 
+              {option.isEvent && selectedType === option.id && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>Target Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={targetDateTime}
+                    onChange={(e) => setTargetDateTime(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.8rem 1rem', 
+                      background: 'var(--surface-container-high)', 
+                      border: '1.5px solid var(--outline-variant)',
+                      borderRadius: 'var(--radius-lg)',
+                      color: 'var(--on-surface)',
+                      fontSize: '0.9rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      colorScheme: theme === 'dark' ? 'dark' : 'light',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
+                      marginBottom: '1rem'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--outline-variant)'}
+                  />
+
+                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>Completion Message</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Milestone Reached!"
+                    value={goalMessage}
+                    onChange={(e) => setGoalMessage(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.8rem 1rem', 
+                      background: 'var(--surface-container-high)', 
+                      border: '1.5px solid var(--outline-variant)',
+                      borderRadius: 'var(--radius-lg)',
+                      color: 'var(--on-surface)',
+                      fontSize: '0.9rem',
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--outline-variant)'}
+                  />
+                </div>
+              )}
+
               <div style={{ 
                 marginTop: '1.5rem', 
                 opacity: selectedType === option.id ? 1 : 0,
@@ -87,6 +149,7 @@ const V2Main = () => {
               }}>
                 <button 
                   className="btn-primary" 
+                  disabled={option.isEvent && !targetDateTime}
                   style={{ 
                     padding: '0.8rem 1.5rem', 
                     fontSize: '0.9rem', 
@@ -95,6 +158,8 @@ const V2Main = () => {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
+                    opacity: (option.isEvent && !targetDateTime) ? 0.5 : 1,
+                    cursor: (option.isEvent && !targetDateTime) ? 'not-allowed' : 'pointer'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -102,7 +167,7 @@ const V2Main = () => {
                   }}
                 >
                   <PlayIcon size={18} />
-                  <span>Start Session</span>
+                  <span>Start Countdown</span>
                 </button>
               </div>
             </div>
