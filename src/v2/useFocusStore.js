@@ -4,7 +4,9 @@ const DEFAULT_SETTINGS = {
   pomodoro: 25,
   shortBreak: 5,
   longBreak: 15,
-  deepWork: 60,
+  deepWork: 65,
+  fontFamily: 'Outfit',
+  showMilliseconds: false,
 };
 
 const FocusContext = createContext();
@@ -43,6 +45,40 @@ export const FocusProvider = ({ children }) => {
       document.body.classList.remove('dark-mode');
     }
   }, [theme]);
+
+  // Apply Font
+  useEffect(() => {
+    const fontValue = settings.fontFamily === 'DSEG14' ? "'DSEG14', monospace" : `'${settings.fontFamily}', sans-serif`;
+    document.documentElement.style.setProperty('--app-font', fontValue);
+  }, [settings.fontFamily]);
+
+  // Title update logic
+  useEffect(() => {
+    if (!activeSession) {
+      document.title = 'Focus / QPkendra';
+      return;
+    }
+
+    if (activeSession.status === 'paused') {
+      document.title = `Paused - Focus`;
+      return;
+    }
+
+    const h = Math.floor(activeSession.remaining / 3600);
+    const m = Math.floor((activeSession.remaining % 3600) / 60);
+    const s = activeSession.remaining % 60;
+    
+    const timeStr = h > 0 
+      ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    
+    document.title = `[${timeStr}] Focus`;
+
+    // Cleanup title on session completion/end
+    return () => {
+      document.title = 'Focus / QPkendra';
+    };
+  }, [activeSession]);
 
   const updateSettings = (newSettings) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
