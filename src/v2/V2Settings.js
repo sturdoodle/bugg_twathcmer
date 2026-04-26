@@ -2,11 +2,22 @@ import React, { useState } from 'react';
 import { useFocus } from './useFocusStore';
 import { VolumeIcon } from './V2Icons';
 import { playCompletionTone } from './V2Sound';
+import { loadFont } from './V2FontLoader';
 import './v2.css';
+import { useEffect } from 'react';
 
 const V2Settings = ({ onClose }) => {
   const { settings, updateSettings } = useFocus();
   const [localSettings, setLocalSettings] = useState(settings);
+  
+  useEffect(() => {
+    loadFont(localSettings.fontFamily);
+  }, [localSettings.fontFamily]);
+
+  const handleFontSelect = (fontId) => {
+    setLocalSettings(prev => ({ ...prev, fontFamily: fontId }));
+    loadFont(fontId);
+  };
 
   const handleSave = () => {
     updateSettings(localSettings);
@@ -97,7 +108,7 @@ const V2Settings = ({ onClose }) => {
                   <button
                     key={font.id}
                     className={`btn-secondary ${localSettings.fontFamily === font.id ? 'active' : ''}`}
-                    onClick={() => setLocalSettings(prev => ({ ...prev, fontFamily: font.id }))}
+                    onClick={() => handleFontSelect(font.id)}
                     style={{ 
                       padding: '0.65rem 0.25rem', 
                       fontSize: '0.65rem',

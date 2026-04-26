@@ -15,17 +15,6 @@ const V2Main = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-
-  const [targetDateTime, setTargetDateTime] = useState('');
-  const [goalMessage, setGoalMessage] = useState('');
-  
-  const milestones = [
-    { id: 'birthday', label: 'Birthday 🎂', text: 'Happy Birthday' },
-    { id: 'subscriber', label: 'Subscriber 🚀', text: 'New Subscriber Milestone!' },
-    { id: 'custom', label: 'Custom ✨', text: '' },
-  ];
-  const [selectedMilestone, setSelectedMilestone] = useState(milestones[0].id);
-
   const timerOptions = [
     { id: 'pomodoro', title: 'Pomodoro', duration: settings.pomodoro, label: 'Classic Focus', description: 'Optimal for sustained concentration.' },
     { id: 'shortBreak', title: 'Short Break', duration: settings.shortBreak, label: 'Best for Rest', description: 'A quick breather to recharge.', mostUsed: true },
@@ -37,17 +26,7 @@ const V2Main = () => {
   const handleStart = () => {
     unlockAudio();
     const option = timerOptions.find(o => o.id === selectedType);
-    if (selectedType === 'goal') {
-      if (!targetDateTime) return;
-      const milestone = milestones.find(m => m.id === selectedMilestone);
-      const fullMessage = selectedMilestone === 'custom' 
-        ? goalMessage 
-        : (milestone.text + (goalMessage ? ` ${goalMessage}` : ''));
-      
-      startSession(selectedType, 0, targetDateTime, fullMessage, selectedMilestone);
-    } else {
-      startSession(selectedType, option.duration);
-    }
+    startSession(selectedType, option.duration);
     navigate('/timer');
   };
 
@@ -99,85 +78,6 @@ const V2Main = () => {
                 {option.description}
               </p>
 
-              {option.isEvent && selectedType === option.id && (
-                <div style={{ marginTop: '1.25rem' }}>
-                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.6rem', display: 'block', opacity: 0.6 }}>Select Milestone</label>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-                    {milestones.map(m => (
-                      <button 
-                        key={m.id}
-                        onClick={(e) => { e.stopPropagation(); setSelectedMilestone(m.id); }}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          borderRadius: 'var(--radius-full)',
-                          background: selectedMilestone === m.id ? 'var(--primary)' : 'var(--surface-container-high)',
-                          color: selectedMilestone === m.id ? 'var(--on-primary)' : 'var(--on-surface)',
-                          border: 'none',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          boxShadow: selectedMilestone === m.id ? '0 4px 12px rgba(179, 27, 35, 0.2)' : 'none'
-                        }}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>Target Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={targetDateTime}
-                    onChange={(e) => setTargetDateTime(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.8rem 1rem', 
-                      background: 'var(--surface-container-high)', 
-                      border: '1.5px solid var(--outline-variant)',
-                      borderRadius: 'var(--radius-lg)',
-                      color: 'var(--on-surface)',
-                      fontSize: '0.9rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      colorScheme: theme === 'dark' ? 'dark' : 'light',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
-                      marginBottom: '1rem'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--outline-variant)'}
-                  />
-
-                  <label className="label-md" style={{ fontSize: '0.65rem', marginBottom: '0.5rem', display: 'block', opacity: 0.6 }}>
-                    {selectedMilestone === 'custom' ? 'Completion Message' : 'Add Suffix Message'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={selectedMilestone === 'custom' ? "e.g. Milestone Reached!" : "e.g. Name or specific note"}
-                    value={goalMessage}
-                    onChange={(e) => setGoalMessage(e.target.value.slice(0, 50))}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.8rem 1rem', 
-                      background: 'var(--surface-container-high)', 
-                      border: '1.5px solid var(--outline-variant)',
-                      borderRadius: 'var(--radius-lg)',
-                      color: 'var(--on-surface)',
-                      fontSize: '0.9rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--outline-variant)'}
-                  />
-                </div>
-              )}
-
               <div style={{ 
                 marginTop: '1.5rem', 
                 opacity: selectedType === option.id ? 1 : 0,
@@ -187,7 +87,6 @@ const V2Main = () => {
               }}>
                 <button 
                   className="btn-primary" 
-                  disabled={option.isEvent && !targetDateTime}
                   style={{ 
                     padding: '0.8rem 1.5rem', 
                     fontSize: '0.9rem', 
@@ -196,16 +95,18 @@ const V2Main = () => {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    opacity: (option.isEvent && !targetDateTime) ? 0.5 : 1,
-                    cursor: (option.isEvent && !targetDateTime) ? 'not-allowed' : 'pointer'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleStart();
+                    if (option.id === 'goal') {
+                      navigate('/celebration');
+                    } else {
+                      handleStart();
+                    }
                   }}
                 >
                   <PlayIcon size={18} />
-                  <span>Start Countdown</span>
+                  <span>{option.id === 'goal' ? 'Setup Celebration' : 'Start Session'}</span>
                 </button>
               </div>
             </div>

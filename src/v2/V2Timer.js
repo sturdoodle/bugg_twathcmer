@@ -5,13 +5,14 @@ import { useFullscreen } from './useFullscreen';
 import { SunIcon, MoonIcon, MaximizeIcon, MinimizeIcon, PlayIcon, PauseIcon, HomeIcon } from './V2Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playCompletionTone } from './V2Sound';
+import { loadFont, loadMultipleFonts } from './V2FontLoader';
 import './v2.css';
 const CELEBRATION_FONTS = [
   'Bungee', 'Comfortaa', 'Inconsolata', 'JetBrains Mono', 
   'Lobster Two', 'Lora', 'Plus Jakarta Sans', 'Rajdhani'
 ];
 
-const CelebrationSuffix = ({ text, baseSize = 'clamp(3.5rem, 15vw, 8rem)' }) => (
+const CelebrationSuffix = ({ text, customFont, baseSize = 'clamp(3.5rem, 15vw, 8rem)' }) => (
   <span className="display-lg" style={{ 
     fontSize: baseSize, 
     color: 'var(--primary)', 
@@ -23,7 +24,7 @@ const CelebrationSuffix = ({ text, baseSize = 'clamp(3.5rem, 15vw, 8rem)' }) => 
   }}>
     {text.split('').map((char, i) => (
       <span key={i} style={{ 
-        fontFamily: `"${CELEBRATION_FONTS[i % CELEBRATION_FONTS.length]}", sans-serif`,
+        fontFamily: customFont ? `'${customFont}', sans-serif` : `"${CELEBRATION_FONTS[i % CELEBRATION_FONTS.length]}", sans-serif`,
         display: 'inline-block'
       }}>
         {char === ' ' ? '\u00A0' : char}
@@ -209,8 +210,15 @@ const V2Timer = () => {
   useEffect(() => {
     if (activeSession?.status === 'completed') {
       playCompletionTone();
+      
+      if (activeSession.headingFont) loadFont(activeSession.headingFont);
+      if (activeSession.messageFont) loadFont(activeSession.messageFont);
+      
+      if (!activeSession.headingFont && !activeSession.messageFont) {
+        loadMultipleFonts(CELEBRATION_FONTS);
+      }
     }
-  }, [activeSession?.status]);
+  }, [activeSession?.status, activeSession?.headingFont, activeSession?.messageFont]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -267,20 +275,20 @@ const V2Timer = () => {
     };
   }, []);
 
-  const [ms, setMs] = useState(99);
+  const [ms, setMs] = useState(999);
 
 
   useEffect(() => {
     if (activeSession?.status !== 'running' || !settings.showMilliseconds) return;
 
-    setMs(99);
+    setMs(999);
     const startTime = Date.now();
     let animationFrameId;
 
     const loop = () => {
       const elapsed = Date.now() - startTime;
-      let nextMs = Math.floor((1000 - elapsed) / 10);
-      if (nextMs < 0) nextMs = 0;
+      let nextMs = 1000 - (elapsed % 1000);
+      if (nextMs >= 1000) nextMs = 999;
       setMs(nextMs);
       animationFrameId = requestAnimationFrame(loop);
     };
@@ -296,7 +304,8 @@ const V2Timer = () => {
     navigate('/');
   };
 
-  const hours = Math.floor(activeSession.remaining / 3600);
+  const days = Math.floor(activeSession.remaining / 86400);
+  const hours = Math.floor((activeSession.remaining % 86400) / 3600);
   const minutes = Math.floor((activeSession.remaining % 3600) / 60);
   const seconds = activeSession.remaining % 60;
 
@@ -345,33 +354,28 @@ const V2Timer = () => {
               )}
               {(() => {
                 const msg = activeSession.type === 'goal' ? (activeSession.completionMessage || "Goal Reached!") : "Session Completed!";
+                const hFont = activeSession.headingFont;
+                const mFont = activeSession.messageFont;
+                const suffix = activeSession.suffixMessage;
                 
                 if (activeSession.milestoneType === 'birthday' && msg.toLowerCase().startsWith('happy birthday')) {
-                  const name = msg.substring(14).trim();
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                       <span className="title-lg" style={{ opacity: 0.7, fontWeight: 500, letterSpacing: '0.05em' }}>Happy Birthday</span>
-                      <CelebrationSuffix text={name} />
+                      <CelebrationSuffix text={suffix} customFont={mFont} />
                     </div>
                   );
                 }
 
-                if (activeSession.milestoneType === 'subscriber' && msg.includes('New Subscriber Milestone!')) {
-                  const suffix = msg.replace('New Subscriber Milestone!', '').trim();
-                  if (suffix) {
-                    return (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                        <span className="title-lg" style={{ opacity: 0.7, fontWeight: 500, letterSpacing: '0.05em' }}>New Subscriber Milestone!</span>
-                        <CelebrationSuffix text={suffix} />
-                      </div>
-                    );
-                  }
-                }
-
-                if (activeSession.milestoneType === 'custom' || activeSession.milestoneType === 'other') {
+                if (activeSession.type === 'goal') {
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                      <CelebrationSuffix text={msg} />
+                      <CelebrationSuffix text={msg} customFont={hFont} />
+                      {suffix && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <CelebrationSuffix text={suffix} customFont={mFont} baseSize="clamp(2rem, 8vw, 4rem)" />
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -497,18 +501,23 @@ const V2Timer = () => {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div className="display-lg" style={{
                   color: activeSession.status === 'paused' ? 'var(--on-surface-variant)' : 'var(--on-surface)',
-                  fontSize: isLedFont ? 'clamp(2.5rem, min(12vw, 18vh), 7rem)' : undefined,
-                  letterSpacing: isLedFont ? '0.1em' : undefined,
+                  fontSize: isLedFont ? 'clamp(1.8rem, min(10vw, 16vh), 7rem)' : undefined,
+                  letterSpacing: isLedFont ? '0.05em' : undefined,
                   fontStyle: isLedFont ? 'italic' : 'normal',
                   fontVariantNumeric: 'tabular-nums',
                   display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
                   alignItems: 'baseline',
-                  gap: '0.05em'
+                  columnGap: '0.15em',
+                  rowGap: '0.2em',
+                  width: '100%',
+                  padding: '0 1rem'
                 }}>
                   {(() => {
-                    const renderSegment = (value) => (
+                    const renderSegment = (value, pad = 2) => (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
-                        <span style={{ visibility: 'hidden' }}>00</span>
+                        <span style={{ visibility: 'hidden' }}>{'0'.repeat(pad)}</span>
                         <AnimatePresence mode="popLayout">
                           <motion.span
                             key={value}
@@ -518,7 +527,7 @@ const V2Timer = () => {
                             transition={{ type: 'spring', stiffness: 400, damping: 28, mass: 0.5, opacity: { duration: 0.2 } }}
                             style={{ position: 'absolute', left: 0, top: 0, width: '100%', textAlign: 'center' }}
                           >
-                            {value.toString().padStart(2, '0')}
+                            {value.toString().padStart(pad, '0')}
                           </motion.span>
                         </AnimatePresence>
                       </div>
@@ -526,23 +535,56 @@ const V2Timer = () => {
 
                     return (
                       <>
-                        {hours > 0 && (
+                        {activeSession.type === 'goal' ? (
                           <>
-                            {renderSegment(hours)}
+                            {days > 0 && (
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'baseline', 
+                                justifyContent: 'center',
+                                width: '100%', 
+                                gap: '0.4rem',
+                                marginBottom: '0.1em'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
+                                  {renderSegment(days, days > 99 ? 3 : 2)}
+                                  <span style={{ fontSize: '0.2em', opacity: 0.5, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    {days === 1 ? 'day' : 'days'}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.05em' }}>
+                              {renderSegment(hours)}
+                              <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
+                              {renderSegment(minutes)}
+                              <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
+                              {renderSegment(seconds)}
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.05em' }}>
+                            {hours > 0 && (
+                              <>
+                                {renderSegment(hours)}
+                                <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
+                              </>
+                            )}
+                            {renderSegment(minutes)}
                             <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
-                          </>
+                            {renderSegment(seconds)}
+                          </div>
                         )}
-                        {renderSegment(minutes)}
-                        <span style={{ opacity: 0.3, alignSelf: 'center', margin: '0 -0.05em' }}>:</span>
-                        {renderSegment(seconds)}
-                        {settings.showMilliseconds && (
-                          <>
-                            <span style={{ opacity: 0.3, margin: '0 0.05em' }}>.</span>
-                            <span style={{ fontSize: '0.45em', opacity: 0.6, width: '1.2em', textAlign: 'left' }}>
-                              {ms.toString().padStart(2, '0')}
-                            </span>
-                          </>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
+                          {settings.showMilliseconds && (
+                            <>
+                              <span style={{ opacity: 0.3, margin: '0 0.05em' }}>.</span>
+                              <span style={{ fontSize: '0.45em', opacity: 0.6, width: '2.5em', textAlign: 'left', fontVariantNumeric: 'tabular-nums' }}>
+                                {ms.toString().padStart(3, '0')}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </>
                     );
                   })()}
