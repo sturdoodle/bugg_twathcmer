@@ -317,7 +317,7 @@ const V2Timer = () => {
             style={{ 
               '--app-font': "'Outfit', sans-serif", 
               backdropFilter: 'blur(16px)', 
-              background: theme === 'dark' ? 'rgba(10, 10, 10, 0.95)' : 'rgba(255, 255, 255, 0.95)', 
+              background: theme === 'dark' ? 'rgba(0, 0, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)', 
               zIndex: 2000,
               position: 'fixed',
               borderRadius: 0,
